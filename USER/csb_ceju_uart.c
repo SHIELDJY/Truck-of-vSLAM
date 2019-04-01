@@ -57,53 +57,54 @@ void uart_csb_init(){
 
 }
 
-void USART1_IRQHandler(void)                	//串口1中断服务程序
-	{
-		u8 Res;
-		if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  
-			{
-				Res =USART_ReceiveData(USART1);	//读取接收到的数据
-				switch(Res)
-				{
-					case 0x00:
-					{
-						speed_L	=	0;
-						speed_R	=	0;
-						break;
-					}
-					case 0xff:
-					{
-						speed_L	=	0;
-						speed_R	=	0;
-						break;
-					}
-					default:
-						direction = Res;
-				}
-/*
-				if(Res==0x23)approve=1;
-				if(approve==1&&Res!=0x23)
-				{
-					if(Res!=0x24)
-					{
-						USART_RX_BUF[len]=Res;
-						len++;
-					}
-					else
-					{
-						approve=0;
-						temp=0;
-						for(i=0;i<len;i++)temp=temp*10+(USART_RX_BUF[i]-0x30);
-						jiange_mm=temp;
-						approve=0;
-						temp=0;
-						len=0;			
-					}
-				}
-*/
-			} 
+u8 main_sta=0; //用作处理主函数各种if，去掉多余的flag（1打印里程计）（2调用计算里程计数据函数）（3串口接收成功）（4串口接收失败）
+ 
+union recieveData  //接收到的数据
+{
+    float d;    //左右轮速度
+    unsigned char data[4];
+}leftdata,rightdata;       //接收的左右轮数据
+ 
+union odometry  //里程计数据共用体
+{
+    float odoemtry_float;
+    unsigned char odometry_char[4];
+}x_data,y_data,theta_data,vel_linear,vel_angular;     //要发布的里程计数据，分别为：X，Y方向移动的距离，当前角度，线速度，角速度
 
-	} 
+void USART1_IRQHandler(void)                	//串口1中断服务程序
+{
+	u8 Res;
+	u8 t=0;
+	float odometry_right;
+	float odometry_left;
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  
+		{
+			Res =USART_ReceiveData(USART1);	//读取接收到的数据
+			if(len<10)
+			{
+				USART_RX_BUF[len]=Res;
+				len++;
+			}
+			else
+			{
+				len=0;
+				
+				//接收左右轮速度
+				for(t=0;t<4;t++)
+				{
+						rightdata.data[t]=USART_RX_BUF[t];
+						leftdata.data[t]=USART_RX_BUF[t+4];
+				}
+
+				//储存左右轮速度
+				odometry_right=rightdata.d;//单位mm/s
+				odometry_left=leftdata.d;//单位mm/s
+				
+				umotor(odometry_left,odometry_right);
+			}
+		} 
+
+} 
 
 void SendData(u32 data)
 {

@@ -18,10 +18,16 @@ int main(void)
 	 delay_init();	 
 	 
 	 /*UART初始化*/
-	 uart_csb_init();
+	 uart_csb_init();	//Tx->GPIOA9
+										//Rx->GPIOA10
 	 
 	 /*电机PWM初始化*/
-	 TIM3_PWM_Init(199,72-1);
+	 TIM3_PWM_Init(199,72-1);	//left  motor->GPIOA6 & GPIOA7
+														//right motor->GPIOB0 & GPIOB1
+	 
+	 /*码盘PWM捕捉初始化*/
+	 TIM4_Cap_Init(199,72-1);	//left  -> GPIOB6
+														//right -> GPIOB7
 	 
 	 /*定时器中断初始化*/
 	 TIM1_Int_Init(100-1,3840-1);//100Khz的计数频率，计数到10为0.1ms  

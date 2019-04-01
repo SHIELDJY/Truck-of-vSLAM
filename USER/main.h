@@ -3,7 +3,7 @@
 
 #include "delay.h"
 #include "diancixunji_adc.h"
-#include "dianji_tim3_pwm.h"
+#include "timer_config.h"
 #include "csb_ceju_uart.h"
 #include "timer.h"
 #include "math.h"
